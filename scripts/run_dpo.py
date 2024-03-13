@@ -27,7 +27,6 @@ from alignment import (
     H4ArgumentParser,
     ModelArguments,
     apply_chat_template,
-    decontaminate_humaneval,
     get_checkpoint,
     get_datasets,
     get_kbit_device_map,
@@ -36,9 +35,11 @@ from alignment import (
     get_tokenizer,
     is_adapter_model,
 )
-from peft import PeftConfig, PeftModel
+from peft import PeftConfig, PeftModel, get_peft_model
 from trl import DPOTrainer
 
+from datasets import disable_caching
+disable_caching()
 
 logger = logging.getLogger(__name__)
 
@@ -102,23 +103,7 @@ def main():
         num_proc=data_args.preprocessing_num_workers,
         remove_columns=column_names,
         desc="Formatting comparisons with prompt template",
-    )
-
-    ##########################
-    # Decontaminate benchmarks
-    ##########################
-    num_raw_train_samples = len(raw_datasets["train"])
-    raw_datasets = raw_datasets.filter(
-        decontaminate_humaneval,
-        fn_kwargs={"text_column": "text_chosen"},
-        batched=True,
-        batch_size=10_000,
-        num_proc=1,
-        desc="Decontaminating HumanEval samples",
-    )
-    num_filtered_train_samples = num_raw_train_samples - len(raw_datasets["train"])
-    logger.info(
-        f"Decontaminated {num_filtered_train_samples} ({num_filtered_train_samples/num_raw_train_samples * 100:.2f}%) samples from the training set."
+        load_from_cache_file=False
     )
 
     # Replace column names with what TRL needs, text_chosen -> chosen and text_rejected -> rejected
@@ -171,6 +156,28 @@ def main():
             revision=model_args.model_revision,
         )
         model_kwargs = None
+    else:
+        # not an adapter model. but lets check if we were told to use peft
+        if model_args.use_peft is True:
+
+            model_kwargs = dict(
+                revision=model_args.base_model_revision,
+                trust_remote_code=model_args.trust_remote_code,
+                use_flash_attention_2=model_args.use_flash_attention_2,
+                torch_dtype=torch_dtype,
+                use_cache=False if training_args.gradient_checkpointing else True,
+                device_map=get_kbit_device_map() if quantization_config is not None else None,
+                quantization_config=quantization_config,
+            )
+            base_model = AutoModelForCausalLM.from_pretrained(
+                model_args.model_name_or_path,
+                **model_kwargs,
+            )
+
+            lora_config = get_peft_config(model_args)
+
+            model = get_peft_model(base_model, lora_config)
+            model_kwargs = None
 
     ref_model = model
     ref_model_kwargs = model_kwargs

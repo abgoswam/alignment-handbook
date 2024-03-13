@@ -1,3 +1,9 @@
+phi7b_lowerlr_phase2_hf
+phi7b_websynthv2_hf
+phi7b_websynthv2_phirecipe_sft_hf
+tlg7b_gamma_phase2_9cb0f5e
+tlg7b_output_dir
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

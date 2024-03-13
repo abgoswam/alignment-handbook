@@ -1,0 +1,87 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "run_dpo_lora_phi7b",
+            "type": "python",
+            "request": "launch",
+            "module": "accelerate.commands.launch",
+            "args": [
+                "--config_file",
+                "/tmp/amlt-code-download/alignment-handbook/recipes/accelerate_configs/multi_gpu.yaml",
+                "--num_processes=1",
+                "/tmp/amlt-code-download/alignment-handbook/scripts/run_dpo.py", 
+                "/tmp/amlt-code-download/alignment-handbook/recipes/phi7b/dpo/config_qlora.yaml",
+                "--load_in_4bit=false"
+            ], // other args comes after train.py
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "ACCELERATE_LOG_LEVEL": "info",
+            }
+        },
+        {
+            "name": "run_dpo_lora_tlg7b",
+            "type": "python",
+            "request": "launch",
+            "module": "accelerate.commands.launch",
+            "args": [
+                "--config_file",
+                "/tmp/amlt-code-download/alignment-handbook/recipes/accelerate_configs/multi_gpu.yaml",
+                "--num_processes=1",
+                "/tmp/amlt-code-download/alignment-handbook/scripts/run_dpo.py", 
+                "/tmp/amlt-code-download/alignment-handbook/recipes/tlg7b/dpo/config_qlora.yaml",
+                "--load_in_4bit=false"
+            ], // other args comes after train.py
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "ACCELERATE_LOG_LEVEL": "info",
+            }
+        },
+        {
+            "name": "run_dpo_tlg7b",
+            "type": "python",
+            "request": "launch",
+            "module": "accelerate.commands.launch",
+            "args": [
+                "--config_file",
+                "/tmp/amlt-code-download/alignment-handbook/recipes/accelerate_configs/deepspeed_zero3.yaml",
+                "/tmp/amlt-code-download/alignment-handbook/scripts/run_dpo.py", 
+                "/tmp/amlt-code-download/alignment-handbook/recipes/tlg7b/dpo/config_full.yaml",
+            ], // other args comes after train.py
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "ACCELERATE_LOG_LEVEL": "info",
+            }
+        },
+        {
+            "name": "run_dpo_phi7b",
+            "type": "python",
+            "request": "launch",
+            "module": "accelerate.commands.launch",
+            "args": [
+                "--config_file",
+                "/tmp/amlt-code-download/alignment-handbook/recipes/accelerate_configs/deepspeed_zero3.yaml",
+                "/tmp/amlt-code-download/alignment-handbook/scripts/run_dpo.py", 
+                "/tmp/amlt-code-download/alignment-handbook/recipes/phi7b/dpo/config_full.yaml",
+            ], // other args comes after train.py
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "ACCELERATE_LOG_LEVEL": "info",
+            }
+        }
+    ]
+}

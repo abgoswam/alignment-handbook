@@ -74,6 +74,9 @@ def get_tokenizer(model_args: ModelArguments, data_args: DataArguments) -> PreTr
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
+    if tokenizer.bos_token_id is None:
+        tokenizer.bos_token_id = tokenizer.eos_token_id
+
     if data_args.truncation_side is not None:
         tokenizer.truncation_side = data_args.truncation_side
 

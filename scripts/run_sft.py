@@ -42,6 +42,8 @@ from alignment import (
 )
 from trl import SFTTrainer, setup_chat_format
 
+# from datasets import disable_caching
+# disable_caching()
 
 logger = logging.getLogger(__name__)
 
@@ -140,12 +142,12 @@ def main():
     ##########################
     # Decontaminate benchmarks
     ##########################
-    num_raw_train_samples = len(raw_datasets["train"])
-    raw_datasets = raw_datasets.filter(decontaminate_humaneval, batched=True, batch_size=10_000, num_proc=1)
-    num_filtered_train_samples = num_raw_train_samples - len(raw_datasets["train"])
-    logger.info(
-        f"Decontaminated {num_filtered_train_samples} ({num_filtered_train_samples/num_raw_train_samples * 100:.2f}%) samples from the training set."
-    )
+    # num_raw_train_samples = len(raw_datasets["train"])
+    # raw_datasets = raw_datasets.filter(decontaminate_humaneval, batched=True, batch_size=10_000, num_proc=1)
+    # num_filtered_train_samples = num_raw_train_samples - len(raw_datasets["train"])
+    # logger.info(
+    #     f"Decontaminated {num_filtered_train_samples} ({num_filtered_train_samples/num_raw_train_samples * 100:.2f}%) samples from the training set."
+    # )
 
     train_dataset = raw_datasets["train"]
     eval_dataset = raw_datasets["test"]

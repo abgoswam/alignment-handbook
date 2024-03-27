@@ -1,0 +1,52 @@
+# Model arguments
+model_name_or_path: phi_7B_iter_65560_beta
+model_revision: main
+torch_dtype: bfloat16
+use_flash_attention_2: false
+trust_remote_code: true
+
+# Data training arguments
+
+# PLEASE DON"T CHANGE THIS TEMPLATE! 
+# It has significant impact to MT-Bench/AlpacaEval such chat evaluation.
+# Let's use the same template across phi- series models, including phi25 and phi-medium 
+chat_template: "{% for message in messages %}{{'<|' + message['role'] + '|>' + '\n' + message['content'] + '<|end|>\n' }}{% endfor %}{{ eos_token }}"
+dataset_mixer:
+  HuggingFaceH4/ultrachat_200k: 1.0
+dataset_splits:
+- train_sft
+- test_sft
+preprocessing_num_workers: 12
+
+# SFT trainer config
+bf16: true
+do_eval: true
+evaluation_strategy: epoch
+gradient_accumulation_steps: 1
+gradient_checkpointing: false
+gradient_checkpointing_kwargs:
+  use_reentrant: False
+hub_model_id: zephyr-7b-sft-full
+hub_strategy: every_save
+learning_rate: 2.0e-05
+log_level: info
+logging_steps: 5  
+logging_strategy: steps
+lr_scheduler_type: cosine
+max_seq_length: 2048
+max_steps: 128
+num_train_epochs: 1
+output_dir: data/zephyr-7b-sft-full
+overwrite_output_dir: true
+per_device_eval_batch_size: 8
+per_device_train_batch_size: 1
+# don't push when running on aml
+# push_to_hub: true
+remove_unused_columns: true
+report_to:
+- tensorboard
+save_strategy: "no"
+save_steps: 100
+save_total_limit: 1
+seed: 42
+warmup_ratio: 0.1

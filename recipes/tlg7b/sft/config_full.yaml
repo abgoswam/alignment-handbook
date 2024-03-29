@@ -1,8 +1,8 @@
 # Model arguments
-model_name_or_path: phi_7B_iter_65560_beta
+model_name_or_path: phi_7B_phase2_iter_29800_20240327
 model_revision: main
 torch_dtype: bfloat16
-use_flash_attention_2: false
+use_flash_attention_2: true
 trust_remote_code: true
 
 # Data training arguments

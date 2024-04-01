@@ -1,10 +1,10 @@
 # python ./pipelines/e2e_pipeline_run.py -t sft -e lmeval -f phi_medium_alpha -r sgai_multinode -n xxx
 
 # Model arguments
-model_name_or_path: dummy/willbeoverwritten
+model_name_or_path: phi_7B_phase2_iter_29800_20240327
 model_revision: main
 torch_dtype: bfloat16
-use_flash_attention_2: false
+use_flash_attention_2: true
 trust_remote_code: true
 
 # Data training arguments
@@ -14,7 +14,7 @@ trust_remote_code: true
 # Let's use the same template across phi- series models, including phi25 and phi-medium 
 chat_template: "{% for message in messages %}{{'<|' + message['role'] + '|>' + '\n' + message['content'] + '<|end|>\n' }}{% endfor %}{{ eos_token }}"
 dataset_mixer:
-  HuggingFaceH4_ultrachat_200k: 1.0
+  HuggingFaceH4/ultrachat_200k: 1.0
   # phi_orca_data: 1.0
   # lm-sys-instruct: 1.0
   # lm-sys-instruct-v2: 1.0
@@ -51,13 +51,13 @@ gradient_checkpointing_kwargs:
 learning_rate: 5.0e-06
 #2.0e-05
 log_level: info
-logging_steps: 5  
+logging_steps: 2  
 logging_strategy: steps
 lr_scheduler_type: cosine
 max_seq_length: 2048
-max_steps: 128
+max_steps: 16
 num_train_epochs: 1
-output_dir: data/zephyr-7b-sft-full
+output_dir: data/tlg-7b-sft-pipeline
 overwrite_output_dir: true
 per_device_eval_batch_size: 8
 per_device_train_batch_size: 1
@@ -65,10 +65,10 @@ per_device_train_batch_size: 1
 # push_to_hub: true
 remove_unused_columns: true
 report_to:
-- azure_ml
+- tensorboard
 # 2/25: save_strategy is working now, can turn on.
 save_strategy: "no"
-save_steps: 100
+save_steps: 10
 save_total_limit: 1
 seed: 42
 warmup_ratio: 0.1

@@ -12,6 +12,23 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "run_sft_tlg7b",
+            "type": "python",
+            "request": "launch",
+            "module": "accelerate.commands.launch",
+            "args": [
+                "--config_file",
+                "/tmp/amlt-code-download/alignment-handbook/recipes/accelerate_configs/deepspeed_zero3.yaml",
+                "/tmp/amlt-code-download/alignment-handbook/scripts/run_sft_pipeline.py", 
+                "/tmp/amlt-code-download/alignment-handbook/recipes//tlg7b/sft/config_full_pipeline.yaml",
+            ], // other args comes after train.py
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "ACCELERATE_LOG_LEVEL": "info",
+            }
+        },
+        {
             "name": "run_dpo_lora_phi7b",
             "type": "python",
             "request": "launch",

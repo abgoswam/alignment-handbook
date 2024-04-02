@@ -74,12 +74,6 @@ def get_tokenizer(model_args: ModelArguments, data_args: DataArguments) -> PreTr
     if tokenizer.model_max_length > 100_000:
         tokenizer.model_max_length = 2048
 
-    # Even for models with max length, we need to set reasonable defaults to avoid OOM.
-    # e.g. phi3-7B defines tokenizer.model_max_length as 8K.  
-    # This training code is not designed to hadle such large length. 
-    # if tokenizer.model_max_length > 2048:
-    #     tokenizer.model_max_length = 2048
-
     if data_args.chat_template is not None:
         tokenizer.chat_template = data_args.chat_template
     elif tokenizer.chat_template is None and tokenizer.default_chat_template is None:

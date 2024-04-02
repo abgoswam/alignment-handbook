@@ -36,6 +36,9 @@ lazy_preprocess: true
 packing: false
 mask_user_and_system_tokens: false
 
+# TLG-7B pre-trained ckpt  model_max_length: 8192
+save_tokenizer_model_max_length: 8192
+
 # SFT trainer config
 bf16: true
 do_eval: false
@@ -54,10 +57,11 @@ log_level: info
 logging_steps: 2  
 logging_strategy: steps
 lr_scheduler_type: cosine
+tokenizer_lazy_preprocess_max_length: 2048
 max_seq_length: 2048
 max_steps: 16
 num_train_epochs: 1
-output_dir: data/tlg-7b-sft-pipeline
+output_dir: data/tlg-7b-sft-pipeline-new
 overwrite_output_dir: true
 per_device_eval_batch_size: 8
 per_device_train_batch_size: 1

@@ -238,7 +238,14 @@ class DataArguments:
     assistant_end_token: Optional[str] = field(
         default="<|end|>", metadata={"help": "The token marking the end of the assistant message. If set, need 'mask_user_and_system_tokens=true'.Default is None."}
     )
-
+    save_tokenizer_model_max_length: Optional[int] = field(
+        default=2048, # set this default to be backward compatible
+        metadata={"help": ("Set the field tokenizer_config.model_max_length when saving the tokenizer")},
+    )
+    tokenizer_lazy_preprocess_max_length: Optional[int] = field(
+        default=2048, 
+        metadata={"help": ("In lazy mode, use specified max_length to prevent OOM, especially for larger models e.g. TLG-7B")},
+    )
 
 @dataclass
 class SFTConfig(transformers.TrainingArguments):

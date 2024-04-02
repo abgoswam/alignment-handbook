@@ -228,7 +228,7 @@ def preprocess(
         prompts,
         return_tensors="pt",
         padding="max_length" if (is_eval or not data_args.packing) else "do_not_pad",
-        max_length=tokenizer.model_max_length,
+        max_length=data_args.tokenizer_lazy_preprocess_max_length,
         truncation=(is_eval or not data_args.packing),
     ).input_ids
 
@@ -593,9 +593,16 @@ def main():
     ##################################
     # Save model and create model card
     ##################################
+    if data_args.save_tokenizer_model_max_length:
+        tokenizer.model_max_length = data_args.save_tokenizer_model_max_length
+
     logger.info("*** Save model ***")
     trainer.save_model(training_args.output_dir)
     logger.info(f"Model saved to {training_args.output_dir}")
+
+    tokenizer_model_src, tokenizer_model_dst= os.path.join(model_args.model_name_or_path, "tokenizer.model"), os.path.join(training_args.output_dir, "tokenizer.model")
+    if os.path.exists(tokenizer_model_src) and not os.path.exists(tokenizer_model_dst):
+        shutil.copyfile(src=tokenizer_model_src, dst=tokenizer_model_dst)
 
     # Save everything else on main process
     kwargs = {

@@ -1,3 +1,12 @@
+phi_7B_phase2_iter_165462_20240401
+phi37b_rc1_0_rope1_2_tfm439_20240404
+tlg4_8_0_hf_checkpoint_iter_0016689
+phi_7B_phase2_iter_165462_20240405
+phi3_phase2v1_1_3_8b_phase2_20240325_rc1_0
+
+heatmap_*
+results.jsonl
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

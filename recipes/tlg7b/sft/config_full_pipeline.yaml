@@ -1,0 +1,78 @@
+# python ./pipelines/e2e_pipeline_run.py -t sft -e lmeval -f phi_medium_alpha -r sgai_multinode -n xxx
+
+# Model arguments
+model_name_or_path: phi_7B_phase2_iter_29800_20240327
+model_revision: main
+torch_dtype: bfloat16
+use_flash_attention_2: true
+trust_remote_code: true
+
+# Data training arguments
+
+# PLEASE DON"T CHANGE THIS TEMPLATE! 
+# It has significant impact to MT-Bench/AlpacaEval such chat evaluation.
+# Let's use the same template across phi- series models, including phi25 and phi-medium 
+chat_template: "{% for message in messages %}{{'<|' + message['role'] + '|>' + '\n' + message['content'] + '<|end|>\n' }}{% endfor %}{{ eos_token }}"
+dataset_mixer:
+  HuggingFaceH4/ultrachat_200k: 1.0
+  # phi_orca_data: 1.0
+  # lm-sys-instruct: 1.0
+  # lm-sys-instruct-v2: 1.0
+  # function_call_redux_follow_up_edge_cases_round_1_2max: 1.0
+  # metamath_instruct: 1.0
+  # complex_instruction_v3: 1.0
+  # phi_math_Jan28_se: 0.03
+  # phi_math_Jan28_nse: 0.03
+  # code/gpt4-cpp_1: 1.0
+  # code/gpt4-python_0: 1.0
+  # code/textbook_js_gpt4: 1.0
+
+dataset_splits:
+- train_sft
+- test_sft
+preprocessing_num_workers: 12
+
+lazy_preprocess: true
+packing: false
+mask_user_and_system_tokens: false
+
+# TLG-7B pre-trained ckpt  model_max_length: 8192
+save_tokenizer_model_max_length: 8192
+
+# SFT trainer config
+bf16: true
+do_eval: false
+evaluation_strategy: "no"
+eval_steps: 100
+# 4-node * 8-GPU jobs: gradient_accumulation steps = 2
+gradient_accumulation_steps: 2
+gradient_checkpointing: false
+gradient_checkpointing_kwargs:
+  use_reentrant: False
+#hub_model_id: zephyr-7b-sft-full
+#hub_strategy: every_save
+learning_rate: 5.0e-06
+#2.0e-05
+log_level: info
+logging_steps: 2  
+logging_strategy: steps
+lr_scheduler_type: cosine
+tokenizer_lazy_preprocess_max_length: 2048
+max_seq_length: 2048
+max_steps: 16
+num_train_epochs: 1
+output_dir: data/tlg-7b-sft-pipeline-new
+overwrite_output_dir: true
+per_device_eval_batch_size: 8
+per_device_train_batch_size: 1
+# don't push when running on aml
+# push_to_hub: true
+remove_unused_columns: true
+report_to:
+- tensorboard
+# 2/25: save_strategy is working now, can turn on.
+save_strategy: "no"
+save_steps: 10
+save_total_limit: 1
+seed: 42
+warmup_ratio: 0.1

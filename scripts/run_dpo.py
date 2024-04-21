@@ -17,6 +17,7 @@ import logging
 import random
 import sys
 
+from sympy import false
 import torch
 import transformers
 from transformers import AutoModelForCausalLM, set_seed
@@ -39,11 +40,14 @@ from alignment import (
 from peft import PeftConfig, PeftModel
 from trl import DPOTrainer
 
-
+import os
+os.environ["WANDB_DISABLED"] = "true"
 logger = logging.getLogger(__name__)
 
 
 def main():
+
+    is_change_from_canxu = False
     parser = H4ArgumentParser((ModelArguments, DataArguments, DPOConfig))
     model_args, data_args, training_args = parser.parse()
 
@@ -148,55 +152,86 @@ def main():
         quantization_config=quantization_config,
     )
 
-    model = model_args.model_name_or_path
-    if is_adapter_model(model, model_args.model_revision) is True:
-        logger.info(f"Loading SFT adapter for {model_args.model_name_or_path=}")
-        peft_config = PeftConfig.from_pretrained(model_args.model_name_or_path, revision=model_args.model_revision)
-        model_kwargs = dict(
-            revision=model_args.base_model_revision,
-            trust_remote_code=model_args.trust_remote_code,
-            use_flash_attention_2=model_args.use_flash_attention_2,
-            torch_dtype=torch_dtype,
-            use_cache=False if training_args.gradient_checkpointing else True,
-            device_map=get_kbit_device_map() if quantization_config is not None else None,
-            quantization_config=quantization_config,
-        )
-        base_model = AutoModelForCausalLM.from_pretrained(
-            peft_config.base_model_name_or_path,
-            **model_kwargs,
-        )
-        model = PeftModel.from_pretrained(
-            base_model,
+    if is_change_from_canxu:
+        print("Following model loading changes from Can...")
+
+        model = transformers.AutoModelForCausalLM.from_pretrained(
             model_args.model_name_or_path,
-            revision=model_args.model_revision,
+            use_flash_attention_2 = True,
+            torch_dtype=torch.bfloat16,
         )
-        model_kwargs = None
+        model.config.use_cache = False
+        
+        # print("Load Refer Model")
+        model_refer = transformers.AutoModelForCausalLM.from_pretrained(
+            model_args.model_name_or_path,
+            use_flash_attention_2 = True,
+            torch_dtype=torch.bfloat16,
+        )
 
-    ref_model = model
-    ref_model_kwargs = model_kwargs
+        trainer = DPOTrainer(
+            model, 
+            model_refer, 
+            tokenizer = tokenizer, 
+            beta = training_args.beta, 
+            args=training_args, 
+            train_dataset = raw_datasets["train"],
+            max_prompt_length = 512, 
+            max_length = training_args.max_length,
+        )
 
-    if model_args.use_peft is True:
-        ref_model = None
-        ref_model_kwargs = None
+    else:
+        print("Following original model loading...")
 
-    #########################
-    # Instantiate DPO trainer
-    #########################
-    trainer = DPOTrainer(
-        model,
-        ref_model,
-        model_init_kwargs=model_kwargs,
-        ref_model_init_kwargs=ref_model_kwargs,
-        args=training_args,
-        beta=training_args.beta,
-        train_dataset=raw_datasets["train"],
-        eval_dataset=raw_datasets["test"],
-        tokenizer=tokenizer,
-        max_length=training_args.max_length,
-        max_prompt_length=training_args.max_prompt_length,
-        peft_config=get_peft_config(model_args),
-        loss_type=training_args.loss_type,
-    )
+        model = model_args.model_name_or_path
+        if is_adapter_model(model, model_args.model_revision) is True:
+            logger.info(f"Loading SFT adapter for {model_args.model_name_or_path=}")
+            peft_config = PeftConfig.from_pretrained(model_args.model_name_or_path, revision=model_args.model_revision)
+            model_kwargs = dict(
+                revision=model_args.base_model_revision,
+                trust_remote_code=model_args.trust_remote_code,
+                use_flash_attention_2=model_args.use_flash_attention_2,
+                torch_dtype=torch_dtype,
+                use_cache=False if training_args.gradient_checkpointing else True,
+                device_map=get_kbit_device_map() if quantization_config is not None else None,
+                quantization_config=quantization_config,
+            )
+            base_model = AutoModelForCausalLM.from_pretrained(
+                peft_config.base_model_name_or_path,
+                **model_kwargs,
+            )
+            model = PeftModel.from_pretrained(
+                base_model,
+                model_args.model_name_or_path,
+                revision=model_args.model_revision,
+            )
+            model_kwargs = None
+
+        ref_model = model
+        ref_model_kwargs = model_kwargs
+
+        if model_args.use_peft is True:
+            ref_model = None
+            ref_model_kwargs = None
+
+        #########################
+        # Instantiate DPO trainer
+        #########################
+        trainer = DPOTrainer(
+            model,
+            ref_model,
+            model_init_kwargs=model_kwargs,
+            ref_model_init_kwargs=ref_model_kwargs,
+            args=training_args,
+            beta=training_args.beta,
+            train_dataset=raw_datasets["train"],
+            eval_dataset=raw_datasets["test"],
+            tokenizer=tokenizer,
+            max_length=training_args.max_length,
+            max_prompt_length=training_args.max_prompt_length,
+            peft_config=get_peft_config(model_args),
+            loss_type=training_args.loss_type,
+        )
 
     ###############
     # Training loop

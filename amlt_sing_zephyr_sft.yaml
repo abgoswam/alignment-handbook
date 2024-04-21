@@ -1,0 +1,39 @@
+description: alignment handbook trials
+
+target:  
+  service: sing  
+  name: GenAI-Shared-CanadaCtr #aims-sing-east-us2  
+  workspace_name: aims-sing-res-eu-WS
+
+environment:
+  image: amlt-sing/acpt-pytorch-2.0.1-py3.10-cuda11.8
+  setup:
+    - pip install torch==2.1.2
+    - pip install .
+    - pip install flash-attn --no-build-isolation
+    - pip install mlflow azureml-mlflow
+ 
+code:
+  local_dir: $CONFIG_DIR/
+
+jobs:
+- name: sft_issue_1077_zephyr
+  sla_tier: premium  # Default: premium
+  execution_mode: basic  # Default: basic
+  sku: G8
+  priority: high
+  process_count_per_node: 1
+  command:
+    - echo "check filesystem space"
+    - df -h
+    - echo "check pwd"
+    - pwd
+    - ls -lh
+    - pip list
+    - ACCELERATE_LOG_LEVEL=info accelerate launch 
+      --config_file recipes/accelerate_configs/deepspeed_zero3.yaml 
+      scripts/run_sft.py recipes/zephyr-7b-beta/sft/config_full.yaml
+  submit_args:
+    max_run_duration_seconds: 1209600   # 14 days
+    env:
+      { AMLT_DOCKERFILE_TEMPLATE: DEFAULT }

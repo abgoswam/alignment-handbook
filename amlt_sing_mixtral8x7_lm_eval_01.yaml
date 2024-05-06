@@ -1,0 +1,40 @@
+description: mixtral8x7_lm_eval_trials
+
+target:  
+  service: sing  
+  name: aims-sing-east-us2 #GenAI-Shared-CanadaCtr #aims-sing-east-us2  
+  workspace_name: aims-sing-res-eu-WS
+
+environment:
+  image: amlt-sing/acpt-2.2.1-py3.10-cuda12.1
+  setup:
+    - echo "export PATH=$$PATH:$$HOME/.local/bin" >> ~/.bashrc && source ~/.bashrc 
+    - echo "============"
+    - mkdir -p ~/.cache/huggingface && echo -n "[hf-token]" > ~/.cache/huggingface/token
+    - pip list
+    - echo 'Above is packages before launch cmd'
+    - pip install lm_eval[vllm]
+    - pip list 
+    - nvcc --version
+ 
+code:
+  local_dir: $CONFIG_DIR/
+
+jobs:
+- name: issue_1079_mixtral8x7_lm_eval
+  sla_tier: premium  # Default: premium
+  execution_mode: basic  # Default: basic
+  sku: G8
+  priority: high
+  process_count_per_node: 1
+  command:
+    - echo "check filesystem space"
+    - df -h
+    - echo "check pwd"
+    - pwd
+    - ls -lh
+    - bash run_lm_eval.sh
+  submit_args:
+    max_run_duration_seconds: 1209600   # 14 days
+    env:
+      { AMLT_DOCKERFILE_TEMPLATE: DEFAULT }

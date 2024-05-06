@@ -11,7 +11,7 @@ environment:
     - pip install torch==2.1.2
     - pip install .
     - pip install flash-attn --no-build-isolation
-    - pip install mlflow azureml-mlflow
+    - pip install azureml-sdk
  
 code:
   local_dir: $CONFIG_DIR/

@@ -1,0 +1,55 @@
+description: mixtral8x7_lm_eval_trials
+
+target:  
+  service: sing  
+  name: aims-sing-east-us2 #GenAI-Shared-CanadaCtr #aims-sing-east-us2  
+  workspace_name: aims-sing-res-eu-WS
+
+environment:
+  # image: amlt-sing/acpt-2.2.1-py3.10-cuda12.1
+  image: pytorch/pytorch:2.1.2-cuda12.1-cudnn8-devel
+  username: posttrainacr
+  registry: posttrainacr.azurecr.io
+  setup:
+    - set -e -o xtrace
+    - echo "export PATH=$$PATH:$$HOME/.local/bin" >> ~/.bashrc && source ~/.bashrc 
+    - echo $$HOME
+    - echo "------------"
+    - echo $$PATH
+    - echo "============"
+    - mkdir -p ~/.cache/huggingface && echo -n "[hf-token]" > ~/.cache/huggingface/token
+    - pip list
+    - echo 'Above is packages before launch cmd'
+    - pip install vllm==0.4.0
+    - pip install peft==0.10.0
+    - pip install fschat==0.2.36
+    - pip install flash-attn==2.5.6
+    - pip install git+https://github.com/EleutherAI/lm-evaluation-harness.git@e6394715b1f3dbb54e35c7551d79d7a62f60fa98
+    - pip list 
+    - nvcc --version
+ 
+code:
+  local_dir: $CONFIG_DIR/
+
+jobs:
+- name: issue_1079_mixtral8x7_lm_eval
+  sla_tier: premium  # Default: premium
+  execution_mode: basic  # Default: basic
+  sku: G8
+  priority: high
+  process_count_per_node: 1
+  command:
+    - export PATH=$$HOME/.local/bin/:$$PATH
+    - echo "check filesystem space"
+    - df -h
+    - echo "check pwd"
+    - pwd
+    - ls -lh
+    - bash run_lm_eval.sh
+
+  submit_args:
+    max_run_duration_seconds: 1209600   # 14 days
+    env:
+      {
+        "SINGULARITY_MPI_ENV": "-mca pml ucx -mca coll ^hcoll --bind-to numa -x RX_QUEUE_LEN=8192 -x IB_RX_QUEUE_LEN=8192 -x UCX_TLS=tcp -x HCOLL_ENABLE_MCAST_ALL=0 -x coll_hcoll_enable=0 -x UCX_NET_DEVICES=eth0 -x NCCL_IB_TIMEOUT=16 -x NCCL_IB_SL=0 -x NCCL_IB_TC=41 -x NCCL_IB_GID_INDEX=3 -x NCCL_IB_QPS_PER_CONNECTION=4 -x NCCL_IB_HCA=mlx5_1,mlx5_2,mlx5_3,mlx5_4,mlx5_5,mlx5_6,mlx5_7,mlx5_8,mlx5_9,mlx5_10,mlx5_11,mlx5_12,mlx5_14,mlx5_15,mlx5_16,mlx5_17 -x NCCL_SOCKET_IFNAME=eth0 -x NCCL_DEBUG=INFO"
+      }

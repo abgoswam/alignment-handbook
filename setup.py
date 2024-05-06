@@ -45,7 +45,8 @@ _deps = [
     "bitsandbytes==0.41.2.post2",
     "black==23.1.0",
     "datasets==2.14.6",
-    "deepspeed==0.14.1",
+    # AH specifies deepspeed12.2. We just want to use whatever comes withthe image.
+    "deepspeed",
     "einops>=0.6.1",
     "evaluate==0.4.0",
     "flake8>=6.0.0",

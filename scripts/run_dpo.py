@@ -19,6 +19,8 @@ import sys
 
 import torch
 import transformers
+import time
+import deepspeed
 from transformers import AutoModelForCausalLM, set_seed
 
 from alignment import (
@@ -39,7 +41,8 @@ from alignment import (
 from peft import PeftConfig, PeftModel
 from trl import DPOTrainer
 
-
+import os
+os.environ["WANDB_DISABLED"] = "true"
 logger = logging.getLogger(__name__)
 
 
@@ -148,36 +151,49 @@ def main():
         quantization_config=quantization_config,
     )
 
-    model = model_args.model_name_or_path
-    if is_adapter_model(model, model_args.model_revision) is True:
-        logger.info(f"Loading SFT adapter for {model_args.model_name_or_path=}")
-        peft_config = PeftConfig.from_pretrained(model_args.model_name_or_path, revision=model_args.model_revision)
-        model_kwargs = dict(
-            revision=model_args.base_model_revision,
-            trust_remote_code=model_args.trust_remote_code,
-            use_flash_attention_2=model_args.use_flash_attention_2,
-            torch_dtype=torch_dtype,
-            use_cache=False if training_args.gradient_checkpointing else True,
-            device_map=get_kbit_device_map() if quantization_config is not None else None,
-            quantization_config=quantization_config,
-        )
-        base_model = AutoModelForCausalLM.from_pretrained(
-            peft_config.base_model_name_or_path,
-            **model_kwargs,
-        )
-        model = PeftModel.from_pretrained(
-            base_model,
-            model_args.model_name_or_path,
-            revision=model_args.model_revision,
-        )
-        model_kwargs = None
+    # hack to get past permission issues in AML when multiple processes attempt copying HF files 
+    # https://github.com/microsoft/genai/issues/469
+    time.sleep(random.uniform(1, 10))  
+    for i in range(32,0,-1):
+        try:
+            model = AutoModelForCausalLM.from_pretrained(model_args.model_name_or_path, **model_kwargs)
+            break
+        except PermissionError as e:
+            if i > 1:
+                print(f"Model encounters PermissionError: {e}")
+                time.sleep(10)
+                continue
+            else:
+                raise e
+    logger.info("*** Model: loaded! ***")
+    
+    for m in model.modules():
+        if "MixtralSparseMoeBlock" in m.__class__.__name__:
+            target_cls = m.__class__
+    deepspeed.utils.set_z3_leaf_modules(model, [target_cls])
+    logger.info("*** Model: zero3 leaf set successfully! ***")
 
-    ref_model = model
-    ref_model_kwargs = model_kwargs
+    # hack to get past permission issues in AML when multiple processes attempt copying HF files 
+    # https://github.com/microsoft/genai/issues/469
+    time.sleep(random.uniform(1, 10))  
+    for i in range(32,0,-1):
+        try:
+            ref_model = transformers.AutoModelForCausalLM.from_pretrained(model_args.model_name_or_path, **model_kwargs)
+            break
+        except PermissionError as e:
+            if i > 1:
+                print(f"Ref Model encounters PermissionError: {e}")
+                time.sleep(10)
+                continue
+            else:
+                raise e
+    logger.info("*** Ref Model: loaded! ***")
 
-    if model_args.use_peft is True:
-        ref_model = None
-        ref_model_kwargs = None
+    for m in ref_model.modules():
+        if "MixtralSparseMoeBlock" in m.__class__.__name__:
+            target_cls = m.__class__
+    deepspeed.utils.set_z3_leaf_modules(ref_model, [target_cls])
+    logger.info("*** Ref Model: zero3 leaf set successfully! ***")
 
     #########################
     # Instantiate DPO trainer
@@ -185,8 +201,6 @@ def main():
     trainer = DPOTrainer(
         model,
         ref_model,
-        model_init_kwargs=model_kwargs,
-        ref_model_init_kwargs=ref_model_kwargs,
         args=training_args,
         beta=training_args.beta,
         train_dataset=raw_datasets["train"],

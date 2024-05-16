@@ -1,5 +1,6 @@
 # Model arguments
-model_name_or_path: mistralai/Mistral-7B-v0.1
+model_name_or_path: /mnt/posttraining/ckpts/mistralai_Mixtral-8x7B-v0.1
+# model_name_or_path: /mnt/posttraining/ckpts/phi_moe_hf/123000_hf_bfloat16_04172024
 model_revision: main
 torch_dtype: bfloat16
 use_flash_attention_2: true
@@ -34,11 +35,11 @@ num_train_epochs: 1
 output_dir: data/zephyr-7b-sft-full
 overwrite_output_dir: true
 per_device_eval_batch_size: 8
-per_device_train_batch_size: 16
+per_device_train_batch_size: 1
 # push_to_hub: true
 remove_unused_columns: true
 report_to:
-- azure_ml
+- tensorboard
 save_strategy: "steps"
 save_steps: 100
 save_total_limit: 1
